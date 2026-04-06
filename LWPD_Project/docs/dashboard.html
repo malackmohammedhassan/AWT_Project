@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LWPD Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Source+Serif+4:wght@600&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --surface: #ffffff;
+            --text: #132238;
+            --muted: #5d6a7a;
+            --line: #d7e1ec;
+            --brand: #0f6fcf;
+            --accent: #0ea5a4;
+            --good: #16803c;
+            --warn: #b45309;
+            --shadow: 0 10px 24px rgba(16, 42, 67, 0.08);
+        }
+
+        [data-theme="dark"] {
+            --bg: #0f1722;
+            --surface: #152233;
+            --text: #e8f0fb;
+            --muted: #9fb0c3;
+            --line: #2a3b52;
+            --brand: #49a0ff;
+            --accent: #35d0cf;
+            --good: #48d77e;
+            --warn: #ffbf69;
+            --shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Manrope", sans-serif;
+            color: var(--text);
+            background: radial-gradient(circle at 15% 0%, rgba(14, 165, 164, 0.12), transparent 40%),
+                radial-gradient(circle at 90% 10%, rgba(15, 111, 207, 0.14), transparent 35%),
+                var(--bg);
+            line-height: 1.5;
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, rgba(15, 111, 207, 0.14), rgba(14, 165, 164, 0.14));
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(1.7rem, 3vw, 2.4rem);
+            letter-spacing: 0.3px;
+        }
+
+        .subtitle {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-family: "Source Serif 4", serif;
+            font-size: 1.05rem;
+        }
+
+        .theme-toggle {
+            border: 1px solid var(--line);
+            background: var(--surface);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 10px 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        section {
+            margin-top: 20px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 18px;
+        }
+
+        h2 {
+            margin: 0 0 10px;
+            font-size: 1.25rem;
+        }
+
+        .section-note {
+            margin-top: 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .kpi {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+            background: linear-gradient(180deg, rgba(15, 111, 207, 0.05), transparent);
+        }
+
+        .kpi .label {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .kpi .value {
+            font-size: 1.45rem;
+            font-weight: 800;
+            margin-top: 6px;
+        }
+
+        .flow {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 10px;
+            align-items: center;
+        }
+
+        .node {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            font-weight: 700;
+            background: rgba(14, 165, 164, 0.08);
+        }
+
+        .arrow {
+            text-align: center;
+            color: var(--muted);
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .feature {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px;
+            background: rgba(15, 111, 207, 0.05);
+            font-size: 0.94rem;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--line);
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background: rgba(15, 111, 207, 0.1);
+        }
+
+        .best {
+            background: rgba(22, 128, 60, 0.18);
+            color: var(--good);
+            font-weight: 800;
+        }
+
+        .charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .chart-box {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 320px;
+        }
+
+        .cm-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .cm-card {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 10px;
+        }
+
+        .cm-card h3 {
+            margin: 0 0 10px;
+            font-size: 1rem;
+        }
+
+        .cm-card img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            display: block;
+            background: #fff;
+        }
+
+        .fallback {
+            display: none;
+            border: 1px dashed var(--line);
+            border-radius: 8px;
+            padding: 18px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            margin: 20px 0 4px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 980px) {
+
+            .kpi-grid,
+            .features-grid,
+            .cm-grid,
+            .charts,
+            .flow {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .arrow {
+                display: none;
+            }
+        }
+
+        @media (max-width: 640px) {
+
+            .kpi-grid,
+            .features-grid,
+            .cm-grid,
+            .charts,
+            .flow {
+                grid-template-columns: 1fr;
+            }
+
+            .wrap {
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="light">
+    <div class="wrap">
+        <header class="hero">
+            <div>
+                <h1>LWPD Dashboard</h1>
+                <p class="subtitle">IEEE Advanced Web Technology | Lightweight URL Phishing Detection</p>
+            </div>
+            <button class="theme-toggle" id="themeToggle" type="button">Toggle Light/Dark</button>
+        </header>
+
+        <section>
+            <h2>Section 1: Dataset Snapshot</h2>
+            <p class="section-note">Hardcoded project facts from the current pipeline run.</p>
+            <div class="kpi-grid">
+                <article class="kpi">
+                    <div class="label">Total Rows</div>
+                    <div class="value">235,795</div>
+                </article>
+                <article class="kpi">
+                    <div class="label">Label Type</div>
+                    <div class="value">Binary (0/1)</div>
+                </article>
+                <article class="kpi">
+                    <div class="label">Split Strategy</div>
+                    <div class="value">80 / 20</div>
+                </article>
+            </div>
+        </section>
+
+        <section>
+            <h2>Section 2: Pipeline Flow (Visual)</h2>
+            <p class="section-note">Static visual sequence. This section is explanatory only and not interactive logic.
+            </p>
+            <div class="flow">
+                <div class="node">Load CSV</div>
+                <div class="arrow">-&gt;</div>
+                <div class="node">URL Feature Extraction</div>
+                <div class="arrow">-&gt;</div>
+                <div class="node">80/20 Split</div>
+                <div class="arrow">-&gt;</div>
+                <div class="node">Train 3 Models</div>
+                <div class="arrow">-&gt;</div>
+                <div class="node">Evaluate + Save Graphs</div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Section 3: URL Feature Set (12)</h2>
+            <div class="features-grid">
+                <div class="feature">url_length</div>
+                <div class="feature">domain_length</div>
+                <div class="feature">path_length</div>
+                <div class="feature">query_length</div>
+                <div class="feature">digit_count</div>
+                <div class="feature">letter_count</div>
+                <div class="feature">dot_count</div>
+                <div class="feature">hyphen_count</div>
+                <div class="feature">slash_count</div>
+                <div class="feature">special_char_count</div>
+                <div class="feature">has_https</div>
+                <div class="feature">has_ip</div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Section 4: Model Metrics (Hardcoded)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Accuracy</th>
+                        <th>Precision</th>
+                        <th>Recall</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Logistic Regression</td>
+                        <td>0.9932</td>
+                        <td>0.9887</td>
+                        <td class="best">0.9994</td>
+                    </tr>
+                    <tr>
+                        <td>Decision Tree</td>
+                        <td class="best">0.9951</td>
+                        <td class="best">0.9925</td>
+                        <td>0.9989</td>
+                    </tr>
+                    <tr>
+                        <td>Naive Bayes</td>
+                        <td>0.9921</td>
+                        <td>0.9890</td>
+                        <td>0.9972</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>Section 5: Charts</h2>
+            <div class="charts">
+                <div class="chart-box"><canvas id="accuracyChart"></canvas></div>
+                <div class="chart-box"><canvas id="prChart"></canvas></div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Section 6: Confusion Matrices</h2>
+            <p class="section-note">Images are loaded from <strong>../results/graphs/</strong>. If missing, a fallback
+                notice is shown.</p>
+            <div class="cm-grid">
+                <article class="cm-card">
+                    <h3>Logistic Regression</h3>
+                    <img id="cm-logistic" alt="Logistic Regression Confusion Matrix" />
+                    <div class="fallback" id="fb-logistic">Confusion matrix image not found in ../results/graphs/</div>
+                </article>
+                <article class="cm-card">
+                    <h3>Decision Tree</h3>
+                    <img id="cm-tree" alt="Decision Tree Confusion Matrix" />
+                    <div class="fallback" id="fb-tree">Confusion matrix image not found in ../results/graphs/</div>
+                </article>
+                <article class="cm-card">
+                    <h3>Naive Bayes</h3>
+                    <img id="cm-bayes" alt="Naive Bayes Confusion Matrix" />
+                    <div class="fallback" id="fb-bayes">Confusion matrix image not found in ../results/graphs/</div>
+                </article>
+            </div>
+        </section>
+
+        <footer>Static artifact: no backend, no live inference, no server dependency.</footer>
+    </div>
+
+    <script>
+        const accuracyData = [0.9932, 0.9951, 0.9921];
+        const precisionData = [0.9887, 0.9925, 0.9890];
+        const recallData = [0.9994, 0.9989, 0.9972];
+        const labels = ["Logistic Regression", "Decision Tree", "Naive Bayes"];
+
+        const themeToggle = document.getElementById("themeToggle");
+        themeToggle.addEventListener("click", function () {
+            const body = document.body;
+            const next = body.getAttribute("data-theme") === "light" ? "dark" : "light";
+            body.setAttribute("data-theme", next);
+        });
+
+        new Chart(document.getElementById("accuracyChart"), {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Accuracy",
+                    data: accuracyData,
+                    backgroundColor: ["#1f77b4", "#ff7f0e", "#2ca02c"]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { min: 0.98, max: 1.0 } }
+            }
+        });
+
+        new Chart(document.getElementById("prChart"), {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Precision",
+                        data: precisionData,
+                        backgroundColor: "#0f6fcf"
+                    },
+                    {
+                        label: "Recall",
+                        data: recallData,
+                        backgroundColor: "#0ea5a4"
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { min: 0.98, max: 1.0 } }
+            }
+        });
+
+        function loadConfusionMatrix(imgId, fallbackId, candidates) {
+            const img = document.getElementById(imgId);
+            const fallback = document.getElementById(fallbackId);
+            let idx = 0;
+
+            function tryNext() {
+                if (idx >= candidates.length) {
+                    img.style.display = "none";
+                    fallback.style.display = "block";
+                    return;
+                }
+                img.onerror = function () {
+                    idx += 1;
+                    tryNext();
+                };
+                img.onload = function () {
+                    fallback.style.display = "none";
+                    img.style.display = "block";
+                };
+                img.src = candidates[idx];
+            }
+
+            tryNext();
+        }
+
+        loadConfusionMatrix("cm-logistic", "fb-logistic", [
+            "../results/graphs/confusion_matrix_logistic_regression.png",
+            "../results/graphs/logistic_regression_confusion_matrix.png"
+        ]);
+
+        loadConfusionMatrix("cm-tree", "fb-tree", [
+            "../results/graphs/confusion_matrix_decision_tree.png",
+            "../results/graphs/decision_tree_confusion_matrix.png"
+        ]);
+
+        loadConfusionMatrix("cm-bayes", "fb-bayes", [
+            "../results/graphs/confusion_matrix_naive_bayes.png",
+            "../results/graphs/naive_bayes_confusion_matrix.png"
+        ]);
+    </script>
+</body>
+
+</html>
