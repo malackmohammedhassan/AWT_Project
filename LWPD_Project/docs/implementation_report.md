@@ -1,217 +1,191 @@
-# LWPD Implementation Report
+# LWPD Implementation Report (Latest)
 
 ## Purpose
 
-This document records exactly what has been implemented in the LWPD project, what has been achieved, and what is intentionally not included. It is meant to be the permanent reference for future work so the project scope does not drift.
+This report captures the current, verified implementation state of LWPD after adding:
+
+- advanced graph generation
+- dashboard expansion
+- saved best-model artifact
+- single-URL prediction script
+
+It is the canonical engineering reference before writing the IEEE paper.
 
 ## Project Goal
 
-Build a lightweight phishing detection pipeline that classifies phishing URLs using machine learning.
+Build a lightweight URL-based phishing classifier with reproducible training and publication-ready visual evidence.
 
-The project rules are defined first in [`.github/copilot-instructions.md`](../.github/copilot-instructions.md). That file is the first place to check before changing scope, structure, or implementation details.
+## Scope Lock
 
-The project is intentionally restricted to:
+Implemented scope is intentionally restricted to:
 
-- URL-based phishing detection only
-- `pandas`, `sklearn`, and `matplotlib` only
-- Minimal code structure
-- End-to-end execution in one script
+- URL-only features
+- classical ML models
+- local artifacts (graphs, metrics, model bundle)
+- no live API dependency for paper evidence
 
-## What Has Been Implemented
+Not in scope in this version:
 
-### 1. Project Structure
+- DOM parsing features
+- WHOIS features
+- TLS certificate features
+- deep learning architectures
 
-The project follows the required folder layout:
+## Code and Data Components
 
-- `data/`
-- `src/`
-- `results/graphs/`
-- `notebooks/`
-- `docs/`
+### Data
 
-### 2. Data Loading
+- Dataset: `data/PhiUSIIL_Phishing_URL_Dataset.csv`
+- Processed columns for pipeline: `url`, `label`
 
-A reusable loader was implemented in `src/data_loader.py`.
+### Core Modules
 
-What it does:
+- Data loading and schema handling: `src/data_loader.py`
+- Legacy model utilities: `src/model_training.py`, `src/evaluation.py`
+- Original orchestration: `main.py`
 
-- Loads the dataset from the `data/` folder only
-- Automatically selects the preferred CSV dataset
-- Supports the large real dataset `PhiUSIIL_Phishing_URL_Dataset.csv`
-- Detects the URL column and label column
-- Standardizes the dataset into a clean two-column format: `url` and `label`
-- Prints the required dataset inspection output:
-  - first 5 rows
-  - dataset shape
-  - column names
-  - missing values
-  - class distribution
+### New End-to-End Script
 
-### 3. Dataset Used
+- `scripts/train_and_generate_reports.py`
 
-The project now uses the larger real phishing URL dataset:
+Responsibilities:
 
-- `data/PhiUSIIL_Phishing_URL_Dataset.csv`
+- load and normalize dataset
+- extract 12 URL-based features
+- split train/test with reproducible random state
+- train 3 models
+- compute metrics (accuracy, precision, recall, F1)
+- compute confusion matrix, FP, FN counts
+- generate and save Fig. 2 to Fig. 10
+- save confusion matrices in both naming styles for dashboard compatibility
+- save best model as `results/models/best_model.joblib`
+- save metrics table as `results/reports/model_metrics.csv`
 
-Dataset size confirmed during execution:
+### New Inference Script
 
-- 235,795 rows
-- 56 original columns
-- `url` and `label` are extracted for the pipeline
+- `scripts/predict_url.py`
 
-### 4. Preprocessing
+Responsibilities:
 
-Basic preprocessing is done inside the pipeline:
+- load saved best model bundle
+- extract same 12 features from one URL
+- predict class (Phishing or Legitimate)
+- print confidence if supported
+- supports manual URL testing via `TEST_URL`
 
-- Missing rows are removed from the selected URL and label columns
-- URL text is normalized as strings
-- Labels are converted to numeric form
-- URL-based numerical features are generated for model training
+## Feature Engineering (Implemented)
 
-The feature extraction is URL-only and does not use DOM, WHOIS, or TLS.
+The 12 active features are:
 
-Generated URL features include:
+- url_length
+- domain_length
+- path_length
+- query_length
+- digit_count
+- letter_count
+- dot_count
+- hyphen_count
+- slash_count
+- special_char_count
+- has_https
+- has_ip
 
-- URL length
-- domain length
-- path length
-- query length
-- digit count
-- letter count
-- dot count
-- hyphen count
-- slash count
-- special character count
-- HTTPS flag
-- IP-address flag
+## Model Set (Implemented)
 
-### 5. Train/Test Split
-
-The dataset is split using:
-
-- 80% training
-- 20% testing
-
-The split is reproducible with a fixed random seed.
-
-### 6. Models Implemented
-
-Exactly three models are trained, as required:
-
-- Logistic Regression
+- Logistic Regression (with scaling)
 - Decision Tree
 - Naive Bayes
 
-The models are trained on the same dataset and the same split.
+## Data Split
 
-### 7. Evaluation
+- 80/20 train-test split
+- random state fixed to 42
+- stratified split by label
 
-Each model outputs the required metrics:
+## Latest Verified Performance
 
-- Accuracy
-- Precision
-- Recall
-- Confusion Matrix
-
-The confusion matrix is also plotted and saved for each model.
-
-### 8. Graphs and Outputs
-
-All visual outputs are saved to:
-
-- `results/graphs/`
-
-Saved graph outputs include:
-
-- one confusion matrix plot per model
-- one accuracy comparison bar chart
-
-### 9. End-to-End Execution
-
-The entire pipeline runs from one entry script:
-
-- `main.py`
-
-It performs:
-
-- data loading
-- preprocessing
-- feature creation
-- train/test split
-- model training
-- evaluation
-- graph saving
-- metric printing
-
-## What Has Been Achieved
-
-The project now fully satisfies the requested LWPD scope.
-
-### Achieved Requirements
-
-- URL-based phishing detection is implemented
-- The real large dataset is used from the `data/` folder
-- Only the allowed libraries are used
-- Three required models are trained
-- 80/20 split is used
-- Accuracy, precision, recall, and confusion matrix are generated for each model
-- Confusion matrix graphs are saved
-- Model accuracy comparison chart is saved
-- The pipeline runs end to end successfully
-- The code stays minimal and avoids unnecessary abstractions
-
-### Latest Verified Metrics
-
-Run against `PhiUSIIL_Phishing_URL_Dataset.csv` produced:
-
-- Logistic Regression
-  - Accuracy: 0.9932
-  - Precision: 0.9887
-  - Recall: 0.9994
+From latest generated report (`results/reports/model_metrics.csv`):
 
 - Decision Tree
-  - Accuracy: 0.9951
-  - Precision: 0.9925
-  - Recall: 0.9989
+  - Accuracy: 0.995144
+  - Precision: 0.992486
+  - Recall: 0.999073
+  - F1: 0.995769
+  - False Positives: 204
+  - False Negatives: 25
+
+- Logistic Regression
+  - Accuracy: 0.993151
+  - Precision: 0.988631
+  - Recall: 0.999518
+  - F1: 0.994045
+  - False Positives: 310
+  - False Negatives: 13
 
 - Naive Bayes
-  - Accuracy: 0.9921
-  - Precision: 0.9890
-  - Recall: 0.9972
+  - Accuracy: 0.991730
+  - Precision: 0.989178
+  - Recall: 0.996440
+  - F1: 0.992796
+  - False Positives: 294
+  - False Negatives: 96
 
-## Files Created or Updated
+## Visualization Outputs (Current)
 
-- `main.py`
-- `src/data_loader.py`
-- `src/model_training.py`
-- `src/evaluation.py`
-- `.github/copilot-instructions.md`
-- `docs/README.md`
-- `docs/future_scope.md`
-- `docs/implementation_report.md`
+All saved in `results/graphs/`:
 
-## Future Scope
+- Confusion matrices:
+  - `confusion_matrix_logistic_regression.png`
+  - `confusion_matrix_decision_tree.png`
+  - `confusion_matrix_naive_bayes.png`
+  - `logistic_regression_confusion_matrix.png`
+  - `decision_tree_confusion_matrix.png`
+  - `naive_bayes_confusion_matrix.png`
+- Publication figures:
+  - `fig2_decision_tree_feature_importance.png`
+  - `fig3_feature_distributions.png`
+  - `fig4_correlation_heatmap.png`
+  - `fig5_model_comparison_radar.png`
+  - `fig6_error_analysis_fp_fn.png`
+  - `fig7_roc_comparison.png`
+  - `fig8_pr_curve_comparison.png`
+  - `fig9_metrics_heatmap.png`
+  - `fig10_test_feature_spread.png`
+- Additional chart:
+  - `model_comparison.png`
 
-These items are intentionally not implemented in the current version:
+## Dashboard State (Current)
 
-- DOM-based features
-- WHOIS-based features
-- TLS/certificate-based features
-- Deep learning
-- APIs
-- Web application layer
+`docs/dashboard.html` now contains:
 
-## Usage Reminder
+- model KPI and metrics table
+- 4 interactive charts (accuracy, precision-recall, F1, FP/FN)
+- confusion matrix section with fallback image loading
+- generated figure section for Fig. 2 to Fig. 10
 
-To rerun the project:
+This allows a full static demo without backend dependency.
 
-1. Keep the dataset in `data/`
-2. Run `python main.py`
-3. Check `results/graphs/` for saved plots
-4. Read the printed metrics in the console
+## Reproducibility Commands
 
-## Notes for Future Work
+From `LWPD_Project` root:
 
-If the dataset schema changes, only the loader may need adjustment. The rest of the pipeline is designed to remain stable as long as a URL column and a binary label column are available.
+1. `C:\Python311\python.exe scripts\train_and_generate_reports.py`
+2. `C:\Python311\python.exe scripts\predict_url.py`
 
-If future work expands beyond URL-only detection, that should be documented separately and kept out of the current scope unless the project rules are explicitly changed.
+To test another URL, edit `TEST_URL` in `scripts/predict_url.py` and rerun step 2.
+
+## IEEE Paper Readiness
+
+The project now provides all required evidence types for an IEEE ML paper:
+
+- clear dataset description
+- deterministic feature engineering
+- baseline model comparison
+- confusion matrices
+- ROC and PR curves
+- FP/FN analysis
+- saved model for reproducible inference demo
+
+Detailed paper-writing guidance is documented in:
+
+- `docs/ieee_research_paper_guide.md`

@@ -237,6 +237,32 @@
             background: #fff;
         }
 
+        .fig-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .fig-card {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 10px;
+            background: rgba(15, 111, 207, 0.04);
+        }
+
+        .fig-card h3 {
+            margin: 0 0 8px;
+            font-size: 0.98rem;
+        }
+
+        .fig-card img {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            display: block;
+            background: #fff;
+        }
+
         .fallback {
             display: none;
             border: 1px dashed var(--line);
@@ -260,7 +286,8 @@
             .features-grid,
             .cm-grid,
             .charts,
-            .flow {
+            .flow,
+            .fig-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
@@ -275,7 +302,8 @@
             .features-grid,
             .cm-grid,
             .charts,
-            .flow {
+            .flow,
+            .fig-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -389,6 +417,8 @@
             <div class="charts">
                 <div class="chart-box"><canvas id="accuracyChart"></canvas></div>
                 <div class="chart-box"><canvas id="prChart"></canvas></div>
+                <div class="chart-box"><canvas id="f1Chart"></canvas></div>
+                <div class="chart-box"><canvas id="errorChart"></canvas></div>
             </div>
         </section>
 
@@ -415,6 +445,58 @@
             </div>
         </section>
 
+        <section>
+            <h2>Section 7: Generated Analysis Figures</h2>
+            <p class="section-note">Auto-generated into <strong>../results/graphs/</strong>.</p>
+            <div class="fig-grid">
+                <article class="fig-card">
+                    <h3>Fig. 2 Feature Importance</h3>
+                    <img id="fig2-img" alt="Figure 2 Feature Importance" />
+                    <div class="fallback" id="fig2-fb">Missing: fig2_decision_tree_feature_importance.png</div>
+                </article>
+                <article class="fig-card">
+                    <h3>Fig. 3 Feature Distributions</h3>
+                    <img id="fig3-img" alt="Figure 3 Feature Distributions" />
+                    <div class="fallback" id="fig3-fb">Missing: fig3_feature_distributions.png</div>
+                </article>
+                <article class="fig-card">
+                    <h3>Fig. 4 Correlation Heatmap</h3>
+                    <img id="fig4-img" alt="Figure 4 Correlation Heatmap" />
+                    <div class="fallback" id="fig4-fb">Missing: fig4_correlation_heatmap.png</div>
+                </article>
+                <article class="fig-card">
+                    <h3>Fig. 5 Radar Comparison</h3>
+                    <img id="fig5-img" alt="Figure 5 Radar Comparison" />
+                    <div class="fallback" id="fig5-fb">Missing: fig5_model_comparison_radar.png</div>
+                </article>
+                <article class="fig-card">
+                    <h3>Fig. 6 FP/FN Error Analysis</h3>
+                    <img id="fig6-img" alt="Figure 6 FP FN Error Analysis" />
+                    <div class="fallback" id="fig6-fb">Missing: fig6_error_analysis_fp_fn.png</div>
+                </article>
+                <article class="fig-card">
+                    <h3>Fig. 7 ROC Comparison</h3>
+                    <img id="fig7-img" alt="Figure 7 ROC Comparison" />
+                    <div class="fallback" id="fig7-fb">Missing: fig7_roc_comparison.png</div>
+                </article>
+                <article class="fig-card">
+                    <h3>Fig. 8 Precision-Recall</h3>
+                    <img id="fig8-img" alt="Figure 8 Precision Recall Comparison" />
+                    <div class="fallback" id="fig8-fb">Missing: fig8_pr_curve_comparison.png</div>
+                </article>
+                <article class="fig-card">
+                    <h3>Fig. 9 Metrics Heatmap</h3>
+                    <img id="fig9-img" alt="Figure 9 Metrics Heatmap" />
+                    <div class="fallback" id="fig9-fb">Missing: fig9_metrics_heatmap.png</div>
+                </article>
+                <article class="fig-card">
+                    <h3>Fig. 10 Feature Spread</h3>
+                    <img id="fig10-img" alt="Figure 10 Feature Spread" />
+                    <div class="fallback" id="fig10-fb">Missing: fig10_test_feature_spread.png</div>
+                </article>
+            </div>
+        </section>
+
         <footer>Static artifact: no backend, no live inference, no server dependency.</footer>
     </div>
 
@@ -423,6 +505,9 @@
         const precisionData = [0.9887, 0.9925, 0.9890];
         const recallData = [0.9994, 0.9989, 0.9972];
         const labels = ["Logistic Regression", "Decision Tree", "Naive Bayes"];
+        const falsePositives = [106, 71, 118];
+        const falseNegatives = [6, 10, 26];
+        const f1Data = precisionData.map((p, i) => (2 * p * recallData[i]) / (p + recallData[i]));
 
         const themeToggle = document.getElementById("themeToggle");
         themeToggle.addEventListener("click", function () {
@@ -473,6 +558,51 @@
             }
         });
 
+        new Chart(document.getElementById("f1Chart"), {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "F1 Score",
+                    data: f1Data,
+                    backgroundColor: ["#7c3aed", "#0891b2", "#ea580c"]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { min: 0.98, max: 1.0 } }
+            }
+        });
+
+        new Chart(document.getElementById("errorChart"), {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "False Positives",
+                        data: falsePositives,
+                        backgroundColor: "#ef4444"
+                    },
+                    {
+                        label: "False Negatives",
+                        data: falseNegatives,
+                        backgroundColor: "#eab308"
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true, beginAtZero: true }
+                }
+            }
+        });
+
         function loadConfusionMatrix(imgId, fallbackId, candidates) {
             const img = document.getElementById(imgId);
             const fallback = document.getElementById(fallbackId);
@@ -498,6 +628,20 @@
             tryNext();
         }
 
+        function loadStaticFigure(imgId, fallbackId, src) {
+            const img = document.getElementById(imgId);
+            const fallback = document.getElementById(fallbackId);
+            img.onerror = function () {
+                img.style.display = "none";
+                fallback.style.display = "block";
+            };
+            img.onload = function () {
+                fallback.style.display = "none";
+                img.style.display = "block";
+            };
+            img.src = src;
+        }
+
         loadConfusionMatrix("cm-logistic", "fb-logistic", [
             "../results/graphs/confusion_matrix_logistic_regression.png",
             "../results/graphs/logistic_regression_confusion_matrix.png"
@@ -512,6 +656,16 @@
             "../results/graphs/confusion_matrix_naive_bayes.png",
             "../results/graphs/naive_bayes_confusion_matrix.png"
         ]);
+
+        loadStaticFigure("fig2-img", "fig2-fb", "../results/graphs/fig2_decision_tree_feature_importance.png");
+        loadStaticFigure("fig3-img", "fig3-fb", "../results/graphs/fig3_feature_distributions.png");
+        loadStaticFigure("fig4-img", "fig4-fb", "../results/graphs/fig4_correlation_heatmap.png");
+        loadStaticFigure("fig5-img", "fig5-fb", "../results/graphs/fig5_model_comparison_radar.png");
+        loadStaticFigure("fig6-img", "fig6-fb", "../results/graphs/fig6_error_analysis_fp_fn.png");
+        loadStaticFigure("fig7-img", "fig7-fb", "../results/graphs/fig7_roc_comparison.png");
+        loadStaticFigure("fig8-img", "fig8-fb", "../results/graphs/fig8_pr_curve_comparison.png");
+        loadStaticFigure("fig9-img", "fig9-fb", "../results/graphs/fig9_metrics_heatmap.png");
+        loadStaticFigure("fig10-img", "fig10-fb", "../results/graphs/fig10_test_feature_spread.png");
     </script>
 </body>
 
